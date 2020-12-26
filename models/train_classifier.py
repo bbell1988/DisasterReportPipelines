@@ -1,40 +1,57 @@
 import sys
-
-# import libraries
-from sqlalchemy import create_engine
 import pandas as pd 
 import numpy as np 
+from sqlalchemy import create_engine
 import re
-from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+import pickle
+
 import nltk
-from nltk.tokenize import word_tokenize, sent_tokenize
-from nltk.corpus import stopwords
-from nltk.stem.wordnet import WordNetLemmatizer
-from nltk.stem import PorterStemmer
 nltk.download(['punkt','stopwords','wordnet'])
 
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+from nltk.stem import PorterStemmer
+from nltk.stem.wordnet import WordNetLemmatizer
+
+from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.datasets import make_multilabel_classification
 from sklearn.multioutput import MultiOutputClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
-
-from sklearn.model_selection import train_test_split
-
-import pickle
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+from sklearn.metrics import classification_report
 
 
 def load_data(database_filepath):
+    """Loads and merges the messages and categories databases
+    
+    Args: database_filepath
+    
+    Returns:
+        X: Dataframe of features
+        Y: Dataframe of labels
+        category_names: Column names of the labels   
+    """
+    
     engine = create_engine(f'sqlite:///{database_filepath}')
     df = pd.read_sql_table('DisasterResponse', engine)
+    
+    # Dropping rows that have a value of 2
     df.drop(df[df['related'] == 2].index, inplace = True) 
+                           
+    # Creating the X and Y datasets
     X = df.loc[:,'message']
     Y = df.iloc[:,4:]
+    
+    # Creating list of category_names
+    category_names = Y.columns
+    
+    return X, Y, category_names
 
 def tokenize(text):
     
     # Normalize text
     text = re.sub(r"[^a-zA-Z0-9]", " ", text.lower())
-    stop_words = stopwords.words("english")
     
     # Tokenize
     words = word_tokenize(text)
@@ -43,6 +60,7 @@ def tokenize(text):
     stemmed = [PorterStemmer().stem(w) for w in words]
     
     # Lemmatizing
+    stop_words = stopwords.words("english")
     words_lemmed = [WordNetLemmatizer().lemmatize(w) for w in stemmed if w not in stop_words]
    
     return words_lemmed
@@ -50,30 +68,40 @@ def tokenize(text):
 
 def build_model():
     
-    model = Pipeline([
+        model = Pipeline([
         ('vect', CountVectorizer(tokenizer=tokenize)),
         ('tfidf', TfidfTransformer()),
-        ('clf', MultiOutputClassifier(RandomForestClassifier()))
-    ])
+        ('clf', MultiOutputClassifier(RandomForestClassifier(n_estimators = 100,
+                                                            min_samples_split = 10,
+                                                            min_samples_leaf = 3,
+                                                            max_depth = None)))
+        ])
+        
+        parameters = {'clf__estimator__n_estimators': [10,50,100],
+                      'clf__estimator__max_depth': [None, 3, 7, 10],
+                      'clf__estimator__min_samples_split': [2, 5, 10],
+                      'clf__estimator__min_samples_leaf':[1,3,10]} 
+        
+        model = RandomizedSearchCV(model,
+                                      param_distributions = parameters,
+                                      cv = 3,
+                                      n_jobs = -1,
+                                      verbose = 2)
     
-    X_train, X_test, Y_train, Y_test = train_test_split(X,Y,test_size=0.2, random_state = 10)
-    pipeline.fit(X_train, Y_train)
-    
-    return model, X_test, Y_test
+        return model
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
-    category_names = df.columns[4:]
-    y_pred = model.predict(X_test)
-    y_pred = pd.DataFrame(y_pred, columns = category_names)
     
-    for i, var in enumerate(ylabels):
-        print(var)
-        print(classification_report(y_test.iloc[:,i],y_pred.iloc[:,i]))
+    Y_pred = model.predict(X_test)
+    print(classification_report(Y_test, Y_pred, target_names = category_names))
 
+   
 def save_model(model, model_filepath):
-    with open('pickle_rCV','wb') as f:
-        pickle.dump(random_search, f)
+   
+    pkl_filename = '{}'.format(model_filepath)
+    with open(pkl_filename, 'wb') as file:
+        pickle.dump(model, file)
 
 
 def main():
