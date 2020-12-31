@@ -26,11 +26,11 @@ def tokenize(text):
     return clean_tokens
 
 # load data
-engine = create_engine('sqlite:///../data/YourDatabaseName.db')
-df = pd.read_sql_table('YourTableName', engine)
+engine = create_engine('sqlite:///../data/DisasterResponse.db')
+df = pd.read_sql_table('DisasterResponse', engine)
 
 # load model
-model = joblib.load("../models/your_model_name.pkl")
+model = joblib.load("../models/classifier.pkl")
 
 
 # index webpage displays cool visuals and receives user input text for model
@@ -43,6 +43,13 @@ def index():
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
     
+    df2 = df.iloc[:,4:]
+    category_names = list(df2.columns)
+    category_counts = [df2.sum()[i] for i in range(len(df2.columns))]
+    
+    pcts = [(df.direct_report.value_counts(normalize=True) * 100)[i] for i in range(2)]
+    pct_labels = ['non-direct report','direct report']
+
     # create visuals
     # TODO: Below is an example - modify to create your own visuals
     graphs = [
@@ -50,7 +57,8 @@ def index():
             'data': [
                 Bar(
                     x=genre_names,
-                    y=genre_counts
+                    y=genre_counts,
+                    marker=dict(color='rgb(85,201,159)')
                 )
             ],
 
@@ -63,7 +71,50 @@ def index():
                     'title': "Genre"
                 }
             }
-        }
+        },
+        
+            # GRAPH 2
+        
+        {
+            'data': [
+                Bar(
+                    x=category_names,
+                    y=category_counts
+                )
+            ],
+
+            'layout': {
+                'title': 'Distribution of Categories',
+                'yaxis': {
+                    'title': "Count"
+                },
+                'xaxis': {
+                    'title': "Category"
+                }
+            }
+        },
+        
+            # GRAPH 3
+        
+        {
+            'data': [
+                Bar(
+                    x=pct_labels,
+                    y=pcts
+                )
+            ],
+
+            'layout': {
+                'title': 'Direct vs Non-Direct Report',
+                'yaxis': {
+                    'title': "Percentages"
+                },
+                'xaxis': {
+                    'title': "Direct or Non-Direct"
+                }
+            }
+        },
+        
     ]
     
     # encode plotly graphs in JSON
@@ -97,4 +148,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main()          
