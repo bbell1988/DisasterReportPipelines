@@ -14,7 +14,9 @@ The libraries used in this study are sqlalchemy, pandas, numpy, re, sklearn, nlt
 
 ## Project Motivation:
 
-In this project, I used the disaster dataset from Appen, formerly Figure Eight. The goal was to create a model that would classify disaster messages into 36 categories, and then deploy the model to a website. An ETL pipeline and ML pipeline needed to be run to complete this study. Below are the instructions for running the files
+Appen, formerly Figure Eight, has supplied a dataset of pre-labeled tweets and text messages that would be received after real-life disasters. Generally after a disaster, hundreds of thousands of messages will be received, but only 1 in 1000 may actually be relevant to the specific disaster-response team. As a data scientist, I have been tasked with preparing the data in an ETL pipeline and creating a supervised machine learning model that can classify these messages into categories. This will help the various disaster-response organizations more efficiently respond to the correct messages. Following that, I am to create a web app that would allow a worker to input a message, and receive the various categories that the message would apply to.
+
+Below are the instructions for running the files
 
 ### Instructions:
 1. Run the following commands in the project's root directory to set up your database and model.
