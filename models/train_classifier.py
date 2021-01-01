@@ -24,21 +24,22 @@ from sklearn.metrics import classification_report
 
 
 def load_data(database_filepath):
-    """Loads and merges the messages and categories databases
     
-    Args: database_filepath
+    """
+    Loads and merges the 'messages' and 'categories' databases
+    
+    Args: 
+        database_filepath
     
     Returns:
         X: Dataframe of features
         Y: Dataframe of labels
-        category_names: Column names of the labels   
+        category_names: Column names of the labels
+        
     """
     
     engine = create_engine(f'sqlite:///{database_filepath}')
     df = pd.read_sql_table('DisasterResponse', engine)
-    
-    # Dropping rows that have a value of 2
-    df.drop(df[df['related'] == 2].index, inplace = True) 
                            
     # Creating the X and Y datasets
     X = df.loc[:,'message']
@@ -51,45 +52,53 @@ def load_data(database_filepath):
 
 def tokenize(text):
     
+    """ 
+    This function takes a string of text, tokenizes and lemmatizes it
+    
+    Args: 
+        text
+    
+    Returns: 
+        words_lemmed: a list of words that have been lemmatized. English stop-words are excluded
+        
+    """
+    
     # Normalize text
     text = re.sub(r"[^a-zA-Z0-9]", " ", text.lower())
     
-    # Tokenize
+    # Tokenizing the text
     words = word_tokenize(text)
     
-    # Stemming
-    stemmed = [PorterStemmer().stem(w) for w in words]
-    
-    # Lemmatizing
+    # Lemmatizing the words
     stop_words = stopwords.words("english")
-    words_lemmed = [WordNetLemmatizer().lemmatize(w) for w in stemmed if w not in stop_words]
+    words_lemmed = [WordNetLemmatizer().lemmatize(w) for w in words if w not in stop_words]
    
     return words_lemmed
 
 
 def build_model():
     
-        model = Pipeline([
-        ('vect', CountVectorizer(tokenizer=tokenize)),
-        ('tfidf', TfidfTransformer()),
-        ('clf', MultiOutputClassifier(RandomForestClassifier(n_estimators = 100,
-                                                            min_samples_split = 10,
-                                                            min_samples_leaf = 3,
-                                                            max_depth = None)))
-        ])
+    model = Pipeline([
+    ('vect', CountVectorizer(tokenizer=tokenize)),
+    ('tfidf', TfidfTransformer()),
+    ('clf', MultiOutputClassifier(RandomForestClassifier(n_estimators = 100,
+                                                        min_samples_split = 10,
+                                                        min_samples_leaf = 3,
+                                                        max_depth = None)))
+    ])
         
-        parameters = {'clf__estimator__n_estimators': [10,50,100],
-                      'clf__estimator__max_depth': [None, 3, 7, 10],
-                      'clf__estimator__min_samples_split': [2, 5, 10],
-                      'clf__estimator__min_samples_leaf':[1,3,10]} 
+#     parameters = {'clf__estimator__n_estimators': [10,50,100],
+#                   'clf__estimator__max_depth': [None, 3, 7, 10],
+#                   'clf__estimator__min_samples_split': [2, 5, 10],
+#                   'clf__estimator__min_samples_leaf':[1,3,10]} 
         
-        model = RandomizedSearchCV(model,
-                                      param_distributions = parameters,
-                                      cv = 3,
-                                      n_jobs = -1,
-                                      verbose = 2)
+#     model = RandomizedSearchCV(model,
+#                                   param_distributions = parameters,
+#                                   cv = 3,
+#                                   n_jobs = -1,
+#                                   verbose = 2)
     
-        return model
+    return model
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
