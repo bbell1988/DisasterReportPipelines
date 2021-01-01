@@ -6,7 +6,18 @@ import pandas as pd
 import numpy as np
 
 def load_data(messages_filepath, categories_filepath):
-
+    
+    """
+    This function takes two filepaths, reads in csv files, and merges them into 1 dataframe
+    
+    Args:
+        messages_filepath
+        categories_filepath
+    Returns:
+        Dataframe with two csv files merged
+        
+    """
+    
     messages = pd.read_csv(messages_filepath)
     categories = pd.read_csv(categories_filepath)
 
@@ -16,6 +27,18 @@ def load_data(messages_filepath, categories_filepath):
     return df
 
 def clean_data(df):
+
+    """ 
+    This function takes a dataframe and expands the 'categories' column, assigning each feature
+    numerical values of 0 for False and 1 for True.
+    
+    Args:
+        A dataframe with a 'categories' column
+    
+    Returns:
+        A cleaned dataframe with 'categories' column expanded and categorical values of 0 or 1
+    
+    """
     
     # Split 'categories' into separate category columns.
     categories = df['categories'].str.split(pat=';', expand = True)
@@ -47,13 +70,28 @@ def clean_data(df):
     # Remove duplicates
     df.drop_duplicates(inplace=True)
     
+    # Removing rows with value of 2 in the 'related' column
+    df = df[df['related'] != 2]
+    
     return df
 
 def save_data(df, database_filename):
     
+    """
+    This function takes in a dataframe and returns a sql database
+    
+    Args: 
+        df
+        database_filename
+        
+    Returns: 
+        A database file called 'DisasterResponse.db'
+        
+    """
+    
     # Save the clean dataset into an sqlite database.
     engine = create_engine(f'sqlite:///{database_filename}')
-    df.to_sql('DisasterResponse', engine, index=False)
+    df.to_sql('DisasterResponse', engine, index=False, if_exists='replace')
     
 def main():
     if len(sys.argv) == 4:
