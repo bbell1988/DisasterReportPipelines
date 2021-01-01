@@ -31,12 +31,12 @@ In this project, I used the disaster dataset from Appen, formerly Figure Eight. 
 
 ## File Descriptions
 
-disaster_categories.csv - csv file of the categories 
-disaster_messages.csv - csv file of the messages
-process_data.py - python file that combines the csv files, cleans them, and outputs a database
-DisasterResponse.db - the database created from the process_data.py file
-train_classifier.py - python file that creates a model to classify the messages, outputs a pickle file
-run.py - runs the python web app
+1. disaster_categories.csv - csv file of the categories 
+2. disaster_messages.csv - csv file of the messages
+3. process_data.py - python file that combines the csv files, cleans them, and outputs a database
+4. DisasterResponse.db - the database created from the process_data.py file
+5. train_classifier.py - python file that creates a model to classify the messages, outputs a pickle file
+6. run.py - runs the python web app
 
 ## Results:
 
